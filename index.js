@@ -135,6 +135,6 @@ function generateWatermark(source, logo, destination, options, callback) {
         });
 }
 
-
-module.exports.embedWatermark = embedWatermark;
-module.exports.embedWatermarkFromFile = embedWatermarkFromFile;
+module.exports = {embedWatermark, embedWatermarkFromFile}
+//module.exports.embedWatermark = embedWatermark;
+//module.exports.embedWatermarkFromFile = embedWatermarkFromFile;
