@@ -1,12 +1,12 @@
 {
-  "name": "dynamic-watermark",
+  "name": "dynamic-image-lib",
   "version": "1.0.0",
-  "description": "Dynamic Watermark is npm watermark module to add watermark over image. It can add image as well as text watermark on given positions",
+  "description": "Dynamic Image Lib is npm watermark module to add watermark over image. It can add image as well as text watermark on given positions",
   "main": "index.js",
   "scripts": {},
   "repository": {
     "type": "git",
-    "url": "https://github.com/navjotdhanawat/dynamic-watermark"
+    "url": "https://github.com/damogallagher/dynamic-image-lib"
   },
   "keywords": [
     "node watermark",
@@ -19,7 +19,7 @@
     "icon watermark",
     "transparent watermark"
   ],
-  "author": "Navjot Dhanawat <navjotdhanawat@gmail.com> (http://www.navjotdhanawat.com/)",
+  "author": "Damien Gallagher <damien.gallagher@gmail.com>",
   "licenses": [
     {
       "type": "MIT",
@@ -27,7 +27,7 @@
     }
   ],
   "bugs": {
-    "url": "https://github.com/navjotdhanawat/dynamic-watermark/issues"
+    "url": "https://github.com/damogallagher/dynamic-image-lib/pulls"
   },
   "dependencies": {
     "gm": "^1.23.1"

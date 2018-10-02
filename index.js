@@ -16,23 +16,45 @@
 
 var gm = require('gm');
 
-var embed = function(options, callback) {
-
+var embedWatermark = function(options, callback) {
     var source = options.source; // Source file path
     var logo = options.logo; // Logo file path
     var ext = source.split('.').pop();
+    options.ext = ext;
     var destination = options.destination; // Destination file path
+    var outputToBuffer = false;
+    options.outputToBuffer = outputToBuffer;
 
+    generateWatermark(source, logo, destination, options, callback);
+};
+
+var embedWatermarkFromFile = function(options, callback) {
+    var source = options.source; // Source file
+    var sourceData = source.data;
+    var logo = options.logo; // Logo file path
+    var ext = source.name.split('.').pop();
+    options.ext = ext;
+    var destination = options.destination; // Destination file path
+    var outputToBuffer = true;
+    options.outputToBuffer = outputToBuffer;
+
+    generateWatermark(sourceData, logo, destination, options, callback);
+};
+
+function generateWatermark(source, logo, destination, options, callback) {
+    /**
+     * Left bottom: X = 10, Y = logoY
+     * Right bottom: X = logoX, Y = logoYlback) {
     /**
      * Left bottom: X = 10, Y = logoY
      * Right bottom: X = logoX, Y = logoY
      * Left Top: X = 10, Y = 10
      * Right Top: X = logoX, Y = 10
      */
-
     var position = options.position; //'right-bottom';
     var type = options.type; //'text';
     var text = options.text ? options.text : '';
+
     gm(source)
         .size(function(err, size) {
 
@@ -72,21 +94,47 @@ var embed = function(options, callback) {
                     var textColor = options.textOption ? options.textOption.color : '#000000';
                     var fontSize = options.textOption ? options.textOption.fontSize : 20;
 
-                    gm(source)
+                    if (!options.outputToBuffer) {
+                        gm(source)
                         .fill(textColor)
                         .drawText(logoX, logoY, text)
                         .fontSize(fontSize + 'px')
                         .write(destination, callback);
+                    } else {
+                        gm(source)
+                        .fill(textColor)
+                        .drawText(logoX, logoY, text)
+                        .fontSize(fontSize + 'px')
+                        .toBuffer(options.ext, function (err, buffer) {
+                            if (err) return handle(err);
+                            console.log('done!');
+                            callback(buffer);
+                        });
+                    }
+
                 } else {
-                    gm(source)
-                        .draw(['image over ' + logoX + ',' + logoY + ' ' + logoWidth + ',' + logoHeight + ' "' + logo + '"'])
-                        .write(destination, callback);
+                    if (!options.outputToBuffer) {
+                        gm(source)
+                            .draw(['image over ' + logoX + ',' + logoY + ' ' + logoWidth + ',' + logoHeight + ' "' + logo + '"'])
+                            .write(destination, callback);
+                    } else {
+                        //See https://github.com/aheckmann/gm
+                        gm(source)
+                            .draw(['image over ' + logoX + ',' + logoY + ' ' + logoWidth + ',' + logoHeight + ' "' + logo + '"'])
+                            .toBuffer(options.ext, function (err, buffer) {
+                                if (err) return handle(err);
+                                console.log('done!');
+                                callback(buffer);
+                            });
+                    }
                 }
             } else {
                 console.error(err);
                 callback(err);
             }
         });
-};
+}
 
-module.exports.embed = embed;
+
+module.exports.embedWatermark = embedWatermark;
+module.exports.embedWatermarkFromFile = embedWatermarkFromFile;
