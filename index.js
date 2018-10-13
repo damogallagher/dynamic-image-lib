@@ -16,17 +16,18 @@
 
 var gm = require('gm');
 const _ = require('lodash')
-var embedWatermark = function(options, callback) {
-console.log('options.source:"'+options.source+'"')
+var embedWatermark = async function(options) {
+
+//console.log('options.source:"'+options.source+'"')
     if (_.isUndefined(options.source)) {
-        embedWatermarkFromFileUpload(options, callback);        
+        return embedWatermarkFromFileUpload(options);        
     } else {
-        embedWatermarkFromFileStr(options, callback);
+        return embedWatermarkFromFileStr(options);
     }
 };
 
 
-function embedWatermarkFromFileStr (options, callback) {
+function embedWatermarkFromFileStr (options) {
     var source = options.source; // Source file path
     var logo = options.logo; // Logo file path
     var ext = source.split('.').pop();
@@ -35,10 +36,10 @@ function embedWatermarkFromFileStr (options, callback) {
     var outputToBuffer = false;
     options.outputToBuffer = outputToBuffer;
 
-    generateWatermark(source, logo, destination, options, callback);
+    return generateWatermark(source, logo, destination, options);
 };
 
-function embedWatermarkFromFileUpload (options, callback) {
+function embedWatermarkFromFileUpload (options) {
     var source = options.sourceUpload; // Source file
     var sourceData = source.data;
     var logo = options.logo; // Logo file path
@@ -48,10 +49,11 @@ function embedWatermarkFromFileUpload (options, callback) {
     var outputToBuffer = true;
     options.outputToBuffer = outputToBuffer;
 
-    generateWatermark(sourceData, logo, destination, options, callback);
+    return generateWatermark(sourceData, logo, destination, options);
 };
 
-function generateWatermark(source, logo, destination, options, callback) {
+function generateWatermark(source, logo, destination, options) {
+    return new Promise(function (resolve, reject) {    
     /**
      * Left bottom: X = 10, Y = logoY
      * Right bottom: X = logoX, Y = logoYlback) {
@@ -112,9 +114,9 @@ function generateWatermark(source, logo, destination, options, callback) {
                         .write(destination, function (e) {
                             //console.log(e || 'Text Watermark Done. Path : ' + destination); // What would you like to do here?
                             if (!e) {
-                                callback({ status: 1 });
+                                resolve({ status: 1 });
                             } else {
-                                callback({ status: 0 });
+                                reject({ status: 0 });
                             }
                         });
                     } else {
@@ -123,11 +125,11 @@ function generateWatermark(source, logo, destination, options, callback) {
                         .drawText(logoX, logoY, text)
                         .fontSize(fontSize + 'px')
                         .toBuffer(options.ext, function (err, buffer) {
-                            if (err) {
-                                callback(err);
+                            if (!err) {
+                                resolve(buffer);
                             } else {
                                 //console.log('done!');
-                                callback(buffer);
+                                reject(err);
                             }                            
                         });
                     }
@@ -139,9 +141,9 @@ function generateWatermark(source, logo, destination, options, callback) {
                             .write(destination, function (e) {
                                 //console.log(e || 'Image Watermark Done. Path : ' + destination); // What would you like to do here?
                                 if (!e) {
-                                    callback({ status: 1 });
+                                    resolve({ status: 1 });
                                 } else {
-                                    callback({ status: 0 });
+                                    reject({ status: 0 });
                                 }
                             });
                     } else {
@@ -149,20 +151,21 @@ function generateWatermark(source, logo, destination, options, callback) {
                         gm(source)
                             .draw(['image over ' + logoX + ',' + logoY + ' ' + logoWidth + ',' + logoHeight + ' "' + logo + '"'])
                             .toBuffer(options.ext, function (err, buffer) {
-                                if (err) {
-                                    callback(err);
+                                if (!err) {
+                                    resolve(buffer);
                                 } else {
                                     //console.log('done!');
-                                    callback(buffer);
+                                    reject(err);
                                 }                                
                             });
                     }
                 }
             } else {
                 console.error(err);
-                callback(err); 
+                reject(err); 
             }
         });
+    });
 }
 
 module.exports = {embedWatermark}
