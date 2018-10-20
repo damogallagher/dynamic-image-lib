@@ -1,6 +1,6 @@
 {
   "name": "dynamic-image-lib",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Dynamic Image Lib is npm watermark module to add watermark over image. It can add image as well as text watermark on given positions",
   "main": "index.js",
   "scripts": {},

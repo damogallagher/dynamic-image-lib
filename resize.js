@@ -18,8 +18,8 @@ function resizeFromFileStr(options) {
     var destination = options.destination; // Destination file path
 
     var outputToBuffer = false;
-    var width = 500;
-    var height = 500;
+    var width = options.resize.width;
+    var height = options.resize.height;
 
     return resizeImage(source, destination, ext, outputToBuffer, width, height);
 };
@@ -33,8 +33,8 @@ function resizeFromFileUpload(options) {
     var destination = options.destination; // Destination file path
 
     var outputToBuffer = true;
-    var width = 500;
-    var height = 500;
+    var width = options.resize.width;
+    var height = options.resize.height;
 
     return resizeImage(sourceData, destination, ext, outputToBuffer, width, height);
 };
