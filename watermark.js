@@ -1,6 +1,10 @@
+//See http://aheckmann.github.io/gm/docs.html for gm documentation
 var gm  = require('gm');
 const {getExtension} = require('./utils');
 const _ = require('lodash')
+const tempWrite = require('temp-write');
+var fs = require('fs');
+
 var performEmbedWatermark = async function(options) {
 
     //console.log('options.source:"'+options.source+'"')
@@ -13,74 +17,106 @@ var performEmbedWatermark = async function(options) {
 
 
 function embedWatermarkFromFileStr (options) {
-    var source = options.source; // Source file path
-    var logo = options.logo; // Logo file path
+    var source = options.source; // Source file path  
     options.ext = getExtension(source);
     var destination = options.destination; // Destination file path
     var outputToBuffer = false;
     options.outputToBuffer = outputToBuffer;
 
-    return generateWatermark(source, logo, destination, options);
+    return generateWatermark(source, destination, options);
 };
 
 function embedWatermarkFromFileUpload (options) {
     var source = options.sourceUpload; // Source file
     var sourceData = source.data;
-    var logo = options.logo; // Logo file path
     options.ext = getExtension(source.name);
 
     var destination = options.destination; // Destination file path
     var outputToBuffer = true;
     options.outputToBuffer = outputToBuffer;
 
-    return generateWatermark(sourceData, logo, destination, options);
+    return generateWatermark(sourceData, destination, options);
 };
+/**
+ * Method to get the watermark details
+ * @param {*} options 
+ */
+function getWatermarkPathDetails(options) {
+    var watermark = options.watermark; // Logo file path
+    var watermarkUpload = options.watermarkUpload;
+    var watermarkPath = watermark;
+    
+    if (watermarkUpload != null && watermarkUpload.data != null) {
+        watermarkPath = tempWrite.sync(watermarkUpload.data);
+    }
+    console.log('watermarkPath:'+watermarkPath);
+    return watermarkPath;
+}
 
-async function generateWatermark(source, logo, destination, options) {
+function removeWatermark(options, watermarkPath) {
+    var watermarkUpload = options.watermarkUpload;
+    if (watermarkUpload != null && watermarkUpload.data != null) {
+        fs.unlink(watermarkPath,() => {
+            console.log('Deleting file ' + watermarkPath)
+        })
+    }
+
+}
+async function generateWatermark(source, destination, options) {
     return new Promise(function (resolve, reject) {    
     /**
-     * Left bottom: X = 10, Y = logoY
-     * Right bottom: X = logoX, Y = logoYlback) {
+     * Left bottom: X = 10, Y = watermarkTextY
+     * Right bottom: X = watermarkTextX, Y = watermarkTextYlback) {
     /**
-     * Left bottom: X = 10, Y = logoY
-     * Right bottom: X = logoX, Y = logoY
+     * Left bottom: X = 10, Y = watermarkTextY
+     * Right bottom: X = watermarkTextX, Y = watermarkTextY
      * Left Top: X = 10, Y = 10
-     * Right Top: X = logoX, Y = 10
+     * Right Top: X = watermarkTextX, Y = 10
      */
     var position = options.position; //'right-bottom';
     var type = options.type; //'text';
     var text = options.text ? options.text : '';
+    var watermarkPath = getWatermarkPathDetails(options);
 
     gm(source)
         .size(function(err, size) {
 
             if (!err) {
-                var logoWidth = (size.width / 10);
-                var logoHeight = (size.height / 10);
-                var logoX = size.width - (size.width / 8);
-                var logoY = size.height - (size.height / 8);
+                var watermarkTextWidth = (size.width / 3);
+                var watermarkTextHeight = (size.height / 3);
+                var watermarkTextX = size.width - (size.width / 8);
+                var watermarkTextY = size.height - (size.height / 8);
 
                 switch (position) {
                     case 'left-top':
-                        var logoX = 10;
-                        var logoY = 10;
+                        var watermarkTextX = 10;
+                        var watermarkTextY = 10;
                         break;
 
                     case 'left-bottom':
-                        var logoX = 10;
-                        var logoY = size.height - (size.height / 8);
+                        var watermarkTextX = 10;
+                        var watermarkTextY = size.height - (size.height / 8);
                         break;
 
                     case 'right-top':
-                        var logoX = size.width - (size.width / 8);
-                        var logoY = 10;
+                        var watermarkTextX = size.width - (size.width / 8);
+                        var watermarkTextY = 10;
                         break;
+
+                    case 'right-bottom':
+                        var watermarkTextX = size.width - (size.width / 8);
+                        var watermarkTextY = size.height - (size.height / 8) ;
+                        break;  
+                    case 'center':
+                        var watermarkTextX = size.width / 2;
+                        var watermarkTextY = size.height / 2 ;
+                        break;                                               
                     default:
                         if (typeof position == 'object') {
-                            var logoWidth = position.logoWidth;
-                            var logoHeight = position.logoHeight;
-                            var logoX = position.logoX;
-                            var logoY = position.logoY;
+                            var watermarkTextWidth = position.watermarkTextWidth;
+                            var watermarkTextHeight = position.watermarkTextHeight;
+                            var watermarkTextX = position.watermarkTextX;
+                            var watermarkTextY = position.watermarkTextY;
                         }
                         break;
                 }
@@ -93,7 +129,7 @@ async function generateWatermark(source, logo, destination, options) {
                     if (!options.outputToBuffer) {
                         gm(source)
                         .fill(textColor)
-                        .drawText(logoX, logoY, text)
+                        .drawText(watermarkTextX, watermarkTextY, text)
                         .fontSize(fontSize + 'px')
                         .write(destination, function (e) {
                             //console.log(e || 'Text Watermark Done. Path : ' + destination); // What would you like to do here?
@@ -106,7 +142,7 @@ async function generateWatermark(source, logo, destination, options) {
                     } else {
                         gm(source)
                         .fill(textColor)
-                        .drawText(logoX, logoY, text)
+                        .drawText(watermarkTextX, watermarkTextY, text)
                         .fontSize(fontSize + 'px')
                         .toBuffer(options.ext, function (err, buffer) {
                             if (!err) {
@@ -120,8 +156,8 @@ async function generateWatermark(source, logo, destination, options) {
 
                 } else {
                     if (!options.outputToBuffer) {
-                        gm(source)
-                            .draw(['image over ' + logoX + ',' + logoY + ' ' + logoWidth + ',' + logoHeight + ' "' + logo + '"'])
+                            gm(source)
+                            .draw(['image over ' + watermarkTextX + ',' + watermarkTextY + ' ' + watermarkTextWidth + ',' + watermarkTextHeight + ' "' + watermarkPath + '"'])
                             .write(destination, function (e) {
                                 //console.log(e || 'Image Watermark Done. Path : ' + destination); // What would you like to do here?
                                 if (!e) {
@@ -129,19 +165,21 @@ async function generateWatermark(source, logo, destination, options) {
                                 } else {
                                     reject({ status: 0 });
                                 }
+                                removeWatermark(options, watermarkPath);
                             });
                     } else {
                         //See https://github.com/aheckmann/gm
                         gm(source)
-                            .draw(['image over ' + logoX + ',' + logoY + ' ' + logoWidth + ',' + logoHeight + ' "' + logo + '"'])
+                            .draw(['image over ' + watermarkTextX + ',' + watermarkTextY + ' ' + watermarkTextWidth + ',' + watermarkTextHeight + ' "' + watermarkPath + '"'])
                             .toBuffer(options.ext, function (err, buffer) {
                                 if (!err) {
                                     resolve(buffer);
                                 } else {
                                     //console.log('done!');
                                     reject(err);
-                                }                                
-                            });
+                                }     
+                                removeWatermark(options, watermarkPath);                           
+                            });                        
                     }
                 }
             } else {

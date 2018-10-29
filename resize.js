@@ -1,3 +1,4 @@
+//See http://aheckmann.github.io/gm/docs.html for gm documentation
 var gm = require('gm');
 const {getExtension} = require('./utils');
 const _ = require('lodash')
@@ -52,7 +53,7 @@ async function resizeImage(source, destination, ext, outputToBuffer, width, heig
                         console.log('Resize status 1');
                         resolve({ status: 1 });
                     } else {
-                        console.log('Resize status 2');
+                        console.log('Resize status 2. e:', e);
                         reject({ status: 0 });
                     }
                 });
